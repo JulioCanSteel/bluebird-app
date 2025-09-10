@@ -6,6 +6,7 @@ import '../widgets/bird_widget.dart';
 import '../utils/validators.dart';
 import 'forgot_password_screen.dart';
 import 'register_screen.dart';
+import 'home_screen.dart'; 
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -159,13 +160,37 @@ class _LoginScreenState extends State<LoginScreen> {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Center(
-                    child: Text(
-                      'G',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey[700],
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () {
+                        // Simular login con Google
+                        _handleGoogleLogin();
+                      },
+                      child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              'G',
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            Text(
+                              'Continuar con Google',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.grey[700],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
@@ -216,19 +241,81 @@ class _LoginScreenState extends State<LoginScreen> {
         _isLoading = true;
       });
       
+      // Simular proceso de login
       await Future.delayed(Duration(seconds: 2));
       
       setState(() {
         _isLoading = false;
       });
       
+      // Mostrar mensaje de éxito temporal
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Login exitoso!'),
+          content: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 8),
+              Text('¡Login exitoso! Bienvenido de vuelta 👋'),
+            ],
+          ),
           backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
         ),
       );
+      
+      // Navegar a la pantalla de inicio después de un breve delay
+      Future.delayed(Duration(milliseconds: 1500), () {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HomeScreen(
+              userEmail: _emailController.text, // Pasar el email del login
+            ),
+          ),
+          (Route<dynamic> route) => false, // Limpiar todo el stack de navegación
+        );
+      });
     }
+  }
+
+  void _handleGoogleLogin() async {
+    // Simular login con Google
+    setState(() {
+      _isLoading = true;
+    });
+    
+    await Future.delayed(Duration(seconds: 2));
+    
+    setState(() {
+      _isLoading = false;
+    });
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.white),
+            SizedBox(width: 8),
+            Text('¡Login con Google exitoso!'),
+          ],
+        ),
+        backgroundColor: Colors.green,
+        duration: Duration(seconds: 2),
+      ),
+    );
+    
+    // Navegar a home con un email simulado de Google
+    Future.delayed(Duration(milliseconds: 1500), () {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HomeScreen(
+            userEmail: 'usuario@gmail.com', // Email simulado de Google
+          ),
+        ),
+        (Route<dynamic> route) => false,
+      );
+    });
   }
 
   @override

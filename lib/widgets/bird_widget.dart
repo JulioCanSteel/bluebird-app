@@ -30,7 +30,7 @@ class BirdWidget extends StatelessWidget {
 
     // VERSIÓN SIMPLE - Solo Image.asset con errorBuilder
     Widget imageWidget = Image.asset(
-      'bird.png',
+      'assets/images/bird.png',
       width: finalWidth,
       height: finalHeight,
       fit: fit,

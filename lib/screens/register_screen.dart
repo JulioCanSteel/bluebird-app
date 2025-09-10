@@ -4,6 +4,7 @@ import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/bird_widget.dart';
 import '../utils/validators.dart';
+import 'verification2_screen.dart'; // Importa la pantalla de verificación
 
 class RegisterScreen extends StatefulWidget {
   @override
@@ -12,10 +13,11 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  
+
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
   bool _isLoading = false;
@@ -23,7 +25,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -52,9 +54,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
                   ],
                 ),
-                
                 SizedBox(height: AppConstants.paddingMedium),
-                
                 // Título
                 Text(
                   AppConstants.createAccount,
@@ -65,9 +65,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
                 SizedBox(height: AppConstants.paddingXLarge),
-                
                 // Campos del formulario
                 CustomTextField(
                   hint: AppConstants.emailHint,
@@ -79,9 +77,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     color: AppConstants.subtitleColor,
                   ),
                 ),
-                
                 SizedBox(height: AppConstants.paddingMedium),
-                
+                CustomTextField(
+                  hint: AppConstants.phoneHint,
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  validator: Validators.validatePhone,
+                  prefixIcon: Icon(
+                    Icons.phone_outlined,
+                    color: AppConstants.subtitleColor,
+                  ),
+                ),
+                SizedBox(height: AppConstants.paddingMedium),
                 CustomTextField(
                   hint: AppConstants.passwordHint,
                   controller: _passwordController,
@@ -103,15 +110,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     },
                   ),
                 ),
-                
                 SizedBox(height: AppConstants.paddingMedium),
-                
                 CustomTextField(
                   hint: AppConstants.confirmPasswordHint,
                   controller: _confirmPasswordController,
                   isPassword: !_isConfirmPasswordVisible,
                   validator: (value) => Validators.validateConfirmPassword(
-                    value, 
+                    value,
                     _passwordController.text,
                   ),
                   prefixIcon: Icon(
@@ -130,17 +135,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     },
                   ),
                 ),
-                
                 SizedBox(height: AppConstants.paddingXLarge * 2),
-                
                 CustomButton(
-                  text: "Siguiente",
+                  text: "Crear Cuenta",
                   isLoading: _isLoading,
                   onPressed: _handleRegister,
                 ),
-                
                 SizedBox(height: AppConstants.paddingLarge),
-                
+                // Términos y condiciones
                 Text(
                   'Al crear una cuenta, aceptas nuestros términos y condiciones',
                   style: TextStyle(
@@ -162,25 +164,50 @@ class _RegisterScreenState extends State<RegisterScreen> {
       setState(() {
         _isLoading = true;
       });
-      
+
+      // Simula el proceso de registro y envío del código
       await Future.delayed(Duration(seconds: 2));
-      
+
       setState(() {
         _isLoading = false;
       });
-      
+
+      // Muestra mensaje de éxito temporal
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Cuenta creada exitosamente!'),
+          content: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text('¡Registro exitoso! Se envió un código de verificación a tu correo.'),
+              ),
+            ],
+          ),
           backgroundColor: Colors.green,
+          duration: Duration(seconds: 3),
         ),
       );
+
+      // Navega a la pantalla de verificación de código
+      Future.delayed(Duration(milliseconds: 800), () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Verification2Screen(
+              userEmail: _emailController.text,
+              userPhone: _phoneController.text,
+            ),
+          ),
+        );
+      });
     }
   }
 
   @override
   void dispose() {
     _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();

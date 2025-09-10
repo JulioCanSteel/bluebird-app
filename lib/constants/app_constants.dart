@@ -28,6 +28,7 @@ class AppConstants {
   static const String loginButton = "Ingresar";
   static const String registerButton = "Registrarse";
   static const String emailHint = "Ingresa tu correo electrónico";
+  static const String phoneHint = "Número de teléfono"; // ✨ NUEVO
   static const String passwordHint = "Contraseña";
   static const String newPasswordHint = "Ingresa tu nueva contraseña";
   static const String confirmPasswordHint = "Confirmar contraseña";
