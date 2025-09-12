@@ -4,7 +4,9 @@ import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/bird_widget.dart';
 import '../utils/validators.dart';
-import 'verification2_screen.dart'; // Importa la pantalla de verificación
+import '../services/firebase_auth_service.dart'; // Requiere Firebase Service
+import 'home_screen.dart'; // Navegación directa a Home
+import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
   @override
@@ -17,6 +19,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  final FirebaseAuthService _authService = FirebaseAuthService(); // Firebase Service
 
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
@@ -55,6 +58,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ],
                 ),
                 SizedBox(height: AppConstants.paddingMedium),
+                
                 // Título
                 Text(
                   AppConstants.createAccount,
@@ -65,8 +69,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   textAlign: TextAlign.center,
                 ),
+                
                 SizedBox(height: AppConstants.paddingXLarge),
-                // Campos del formulario
+                
+                // Campo Email
                 CustomTextField(
                   hint: AppConstants.emailHint,
                   controller: _emailController,
@@ -77,7 +83,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     color: AppConstants.subtitleColor,
                   ),
                 ),
+                
                 SizedBox(height: AppConstants.paddingMedium),
+                
+                // Campo Teléfono
                 CustomTextField(
                   hint: AppConstants.phoneHint,
                   controller: _phoneController,
@@ -88,7 +97,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     color: AppConstants.subtitleColor,
                   ),
                 ),
+                
                 SizedBox(height: AppConstants.paddingMedium),
+                
+                // Campo Contraseña
                 CustomTextField(
                   hint: AppConstants.passwordHint,
                   controller: _passwordController,
@@ -110,7 +122,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     },
                   ),
                 ),
+                
                 SizedBox(height: AppConstants.paddingMedium),
+                
+                // Campo Confirmar Contraseña
                 CustomTextField(
                   hint: AppConstants.confirmPasswordHint,
                   controller: _confirmPasswordController,
@@ -135,13 +150,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     },
                   ),
                 ),
+                
                 SizedBox(height: AppConstants.paddingXLarge * 2),
+                
+                // Botón Crear Cuenta
                 CustomButton(
                   text: "Crear Cuenta",
                   isLoading: _isLoading,
                   onPressed: _handleRegister,
                 ),
+                
                 SizedBox(height: AppConstants.paddingLarge),
+                
                 // Términos y condiciones
                 Text(
                   'Al crear una cuenta, aceptas nuestros términos y condiciones',
@@ -151,6 +171,38 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   textAlign: TextAlign.center,
                 ),
+                
+                SizedBox(height: AppConstants.paddingMedium),
+                
+                // Link para ir a Login
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '¿Ya tienes cuenta? ',
+                      style: TextStyle(
+                        color: AppConstants.subtitleColor,
+                        fontSize: 14,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => LoginScreen()),
+                        );
+                      },
+                      child: Text(
+                        'Iniciar Sesión',
+                        style: TextStyle(
+                          color: AppConstants.lightBlue,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -159,29 +211,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  void _handleRegister() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
+  // Método de registro con Firebase
+  Future<void> _handleRegister() async {
+    if (!_formKey.currentState!.validate()) return;
 
-      // Simula el proceso de registro y envío del código
-      await Future.delayed(Duration(seconds: 2));
+    setState(() => _isLoading = true);
 
-      setState(() {
-        _isLoading = false;
-      });
+    // Usar Firebase Auth Service
+    final result = await _authService.registerWithEmailAndPassword(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+      phone: _phoneController.text.trim(),
+    );
 
-      // Muestra mensaje de éxito temporal
+    setState(() => _isLoading = false);
+
+    if (result['success']) {
+      // Mostrar mensaje de éxito
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
             children: [
               Icon(Icons.check_circle, color: Colors.white),
               SizedBox(width: 8),
-              Expanded(
-                child: Text('¡Registro exitoso! Se envió un código de verificación a tu correo.'),
-              ),
+              Expanded(child: Text('¡Registro exitoso! Bienvenido a Bluebird.')),
             ],
           ),
           backgroundColor: Colors.green,
@@ -189,18 +242,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
       );
 
-      // Navega a la pantalla de verificación de código
-      Future.delayed(Duration(milliseconds: 800), () {
-        Navigator.push(
+      // Navegar directamente a HomeScreen (usuario ya está autenticado)
+      Future.delayed(Duration(milliseconds: 1000), () {
+        Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (context) => Verification2Screen(
+            builder: (context) => HomeScreen(
               userEmail: _emailController.text,
               userPhone: _phoneController.text,
             ),
           ),
+          (route) => false, // Limpiar stack de navegación
         );
       });
+    } else {
+      // Mostrar error de Firebase
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white),
+              SizedBox(width: 8),
+              Expanded(child: Text(result['message'])),
+            ],
+          ),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ),
+      );
     }
   }
 

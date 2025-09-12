@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../constants/app_constants.dart';
 import '../widgets/custom_button.dart';
 import '../utils/validators.dart';
-import 'package:google_fonts/google_fonts.dart';
+
 
 
 class VerificationScreen extends StatefulWidget {

@@ -4,9 +4,10 @@ import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/bird_widget.dart';
 import '../utils/validators.dart';
+import '../services/firebase_auth_service.dart';
 import 'forgot_password_screen.dart';
 import 'register_screen.dart';
-import 'home_screen.dart'; 
+import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -17,6 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  final FirebaseAuthService _authService = FirebaseAuthService();
   
   bool _isPasswordVisible = false;
   bool _isLoading = false;
@@ -43,7 +45,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     BirdWidget(
                       width: 70,
                       height: 70,
-                      showShadow: false, // Sin sombra para el header
+                      showShadow: false,
                     ),
                   ],
                 ),
@@ -55,15 +57,15 @@ class _LoginScreenState extends State<LoginScreen> {
                   AppConstants.welcomeTitle,
                   style: TextStyle(
                     color: AppConstants.textColor,
-                    fontSize: screenWidth < 360 ? 24 : 28, // Responsive font
+                    fontSize: screenWidth < 360 ? 24 : 28,
                     fontWeight: FontWeight.bold,
                   ),
                   textAlign: TextAlign.center,
                 ),
                 
-                SizedBox(height: AppConstants.paddingXLarge * 2),
+                SizedBox(height: AppConstants.paddingXLarge),
                 
-                // Campo de email
+                // Campo Email
                 CustomTextField(
                   hint: AppConstants.emailHint,
                   controller: _emailController,
@@ -75,9 +77,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 
-                SizedBox(height: AppConstants.paddingMedium),
+                SizedBox(height: AppConstants.paddingLarge),
                 
-                // Campo de contraseña
+                // Campo Contraseña
                 CustomTextField(
                   hint: AppConstants.passwordHint,
                   controller: _passwordController,
@@ -102,7 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 
                 SizedBox(height: AppConstants.paddingMedium),
                 
-                // Enlace olvidar contraseña
+                // Enlace recuperar contraseña
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
@@ -122,78 +124,59 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 
-                SizedBox(height: AppConstants.paddingXLarge),
+                SizedBox(height: AppConstants.paddingMedium),
                 
-                // Botón ingresar
+                // Botón Ingresar
                 CustomButton(
                   text: AppConstants.loginButton,
                   isLoading: _isLoading,
                   onPressed: _handleLogin,
                 ),
                 
-                SizedBox(height: AppConstants.paddingXLarge),
+                SizedBox(height: AppConstants.paddingMedium),
                 
-                // Separador
+                // Divider
                 Row(
                   children: [
-                    Expanded(child: Divider(color: AppConstants.subtitleColor)),
+                    Expanded(
+                      child: Container(
+                        height: 1,
+                        color: AppConstants.subtitleColor.withOpacity(0.3),
+                      ),
+                    ),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: AppConstants.paddingMedium),
                       child: Text(
                         AppConstants.continueWith,
                         style: TextStyle(
                           color: AppConstants.subtitleColor,
-                          fontSize: 14,
+                          fontSize: 12,
                         ),
                       ),
                     ),
-                    Expanded(child: Divider(color: AppConstants.subtitleColor)),
+                    Expanded(
+                      child: Container(
+                        height: 1,
+                        color: AppConstants.subtitleColor.withOpacity(0.3),
+                      ),
+                    ),
                   ],
                 ),
                 
                 SizedBox(height: AppConstants.paddingLarge),
                 
-                // Botón Google
-                Container(
-                  height: 56,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Material(
-                    color: Colors.transparent,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(12),
-                      onTap: () {
-                        // Simular login con Google
-                        _handleGoogleLogin();
-                      },
-                      child: Center(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'G',
-                              style: TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey[700],
-                              ),
-                            ),
-                            SizedBox(width: 8),
-                            Text(
-                              'Continuar con Google',
-                              style: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.grey[700],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+                // Botones sociales placeholder
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    _buildSocialButton(Icons.g_mobiledata, () {
+                      _showFeatureNotImplemented('Google');
+                    }),
+                    SizedBox(width: AppConstants.paddingLarge),
+                    _buildSocialButton(Icons.facebook, () {
+                      _showFeatureNotImplemented('Facebook');
+                    }),
+                  ],
                 ),
                 
                 SizedBox(height: AppConstants.paddingXLarge),
@@ -235,87 +218,89 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  void _handleLogin() async {
-    if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true;
-      });
-      
-      // Simular proceso de login
-      await Future.delayed(Duration(seconds: 2));
-      
-      setState(() {
-        _isLoading = false;
-      });
-      
-      // Mostrar mensaje de éxito temporal
+  Widget _buildSocialButton(IconData icon, VoidCallback onPressed) {
+    return Container(
+      width: 50,
+      height: 50,
+      decoration: BoxDecoration(
+        color: AppConstants.cardColor,
+        borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+        border: Border.all(
+          color: AppConstants.subtitleColor.withOpacity(0.2),
+        ),
+      ),
+      child: IconButton(
+        onPressed: onPressed,
+        icon: Icon(
+          icon,
+          color: AppConstants.textColor,
+          size: 24,
+        ),
+      ),
+    );
+  }
+
+  void _showFeatureNotImplemented(String feature) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('$feature login próximamente disponible'),
+        backgroundColor: AppConstants.primaryBlue,
+      ),
+    );
+  }
+
+  Future<void> _handleLogin() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    final result = await _authService.signInWithEmailAndPassword(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+    );
+
+    setState(() => _isLoading = false);
+
+    if (result['success']) {
+      // Mostrar mensaje de éxito
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
             children: [
               Icon(Icons.check_circle, color: Colors.white),
               SizedBox(width: 8),
-              Text('¡Login exitoso! Bienvenido de vuelta 👋'),
+              Expanded(child: Text(result['message'])),
             ],
           ),
           backgroundColor: Colors.green,
           duration: Duration(seconds: 2),
         ),
       );
-      
-      // Navegar a la pantalla de inicio después de un breve delay
-      Future.delayed(Duration(milliseconds: 1500), () {
+
+      // Navegar a Home después de mostrar mensaje
+      Future.delayed(Duration(milliseconds: 800), () {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(
-            builder: (context) => HomeScreen(
-              userEmail: _emailController.text, // Pasar el email del login
-            ),
-          ),
-          (Route<dynamic> route) => false, // Limpiar todo el stack de navegación
+          MaterialPageRoute(builder: (context) => HomeScreen()),
+          (route) => false,
         );
       });
-    }
-  }
-
-  void _handleGoogleLogin() async {
-    // Simular login con Google
-    setState(() {
-      _isLoading = true;
-    });
-    
-    await Future.delayed(Duration(seconds: 2));
-    
-    setState(() {
-      _isLoading = false;
-    });
-    
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            Icon(Icons.check_circle, color: Colors.white),
-            SizedBox(width: 8),
-            Text('¡Login con Google exitoso!'),
-          ],
-        ),
-        backgroundColor: Colors.green,
-        duration: Duration(seconds: 2),
-      ),
-    );
-    
-    // Navegar a home con un email simulado de Google
-    Future.delayed(Duration(milliseconds: 1500), () {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(
-          builder: (context) => HomeScreen(
-            userEmail: 'usuario@gmail.com', // Email simulado de Google
+    } else {
+      // Mostrar error
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.error_outline, color: Colors.white),
+              SizedBox(width: 8),
+              Expanded(child: Text(result['message'])),
+            ],
           ),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
         ),
-        (Route<dynamic> route) => false,
       );
-    });
+    }
   }
 
   @override
