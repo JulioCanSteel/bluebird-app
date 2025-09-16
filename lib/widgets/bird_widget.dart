@@ -9,7 +9,7 @@ class BirdWidget extends StatelessWidget {
   final Color shadowColor;     // Color de la sombra
 
   const BirdWidget({
-    Key? key,
+    super.key,
     this.width,
     this.height,
     this.fit = BoxFit.contain,
@@ -17,7 +17,7 @@ class BirdWidget extends StatelessWidget {
     this.shadowBlur = 10.0,
     this.shadowColor = const Color.fromARGB(66, 0, 0, 0),
    
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -50,7 +50,7 @@ class BirdWidget extends StatelessWidget {
               Icon(
                 Icons.image_not_supported,
                 color: Colors.blue,
-                size: finalWidth! * 0.3,
+                size: finalWidth * 0.3,
               ),
               SizedBox(height: 8),
               Text(

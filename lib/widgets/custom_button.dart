@@ -9,17 +9,17 @@ class CustomButton extends StatelessWidget {
   final double? width;            // Ancho personalizado
   
   const CustomButton({
-    Key? key,
+    super.key,
     required this.text,
     required this.onPressed,
     this.isOutlined = false,
     this.isLoading = false,
     this.width,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: width ?? double.infinity,
       height: 56,
       child: ElevatedButton(
