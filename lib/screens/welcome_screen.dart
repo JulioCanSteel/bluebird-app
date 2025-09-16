@@ -7,6 +7,8 @@ import 'login_screen.dart';
 import 'register_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
+  const WelcomeScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
@@ -58,7 +60,7 @@ class WelcomeScreen extends StatelessWidget {
                   children: [
                     // Botón Ingresar - Azul relleno
                     Expanded(
-                      child: Container(
+                      child: SizedBox(
                         height: 56,
                         child: ElevatedButton(
                           onPressed: () {
@@ -88,7 +90,7 @@ class WelcomeScreen extends StatelessWidget {
                     
                     // Botón Registrarse - Blanco/Outlined
                     Expanded(
-                      child: Container(
+                      child: SizedBox(
                         height: 56,
                         child: ElevatedButton(
                           onPressed: () {

@@ -7,6 +7,8 @@ import '../utils/validators.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
+  const ForgotPasswordScreen({super.key});
+
   @override
   _ForgotPasswordScreenState createState() => _ForgotPasswordScreenState();
 }
@@ -29,7 +31,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   // Control de pasos
   int _currentStep = 0; // 0: Email, 1: Código, 2: Nueva contraseña
   String _userEmail = "";
-  String _correctCode = "1234"; // Código de ejemplo
+  final String _correctCode = "1234"; // Código de ejemplo
   
   // Timer para el código
   int _timeRemaining = 300; // 5 minutos en segundos
@@ -433,7 +435,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   Widget _buildCodeField(int index) {
-    return Container(
+    return SizedBox(
       width: 60,
       height: 70,
       child: TextFormField(

@@ -9,6 +9,8 @@ import 'home_screen.dart'; // Navegación directa a Home
 import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
+
   @override
   _RegisterScreenState createState() => _RegisterScreenState();
 }

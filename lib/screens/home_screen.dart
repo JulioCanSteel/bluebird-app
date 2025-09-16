@@ -1,22 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../constants/app_constants.dart';
 import '../widgets/bird_widget.dart';
 import 'login_screen.dart';
-
 import 'package:google_fonts/google_fonts.dart';
 
 class HomeScreen extends StatelessWidget {
-  final String? userEmail; // Email del usuario 
-  final String? userPhone;
-  
-  const HomeScreen({
-    Key? key,
-    this.userEmail,
-    this.userPhone,
-  }) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    // 📱 Obtener datos del usuario actual automáticamente
+    final User? currentUser = FirebaseAuth.instance.currentUser;
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
@@ -100,7 +95,7 @@ class HomeScreen extends StatelessWidget {
                 Spacer(flex: 2),
                 
                 // Email del usuario si está disponible
-                if (userEmail != null) ...[
+                if (currentUser?.email != null) ...[
                   Container(
                     padding: EdgeInsets.symmetric(
                       horizontal: AppConstants.paddingLarge,
@@ -125,7 +120,7 @@ class HomeScreen extends StatelessWidget {
                         SizedBox(width: AppConstants.paddingSmall),
                         Flexible(
                           child: Text(
-                            userEmail!,
+                            currentUser!.email!,
                             style: GoogleFonts.poppins(
                               fontSize: 14,
                               color: Colors.white.withOpacity(0.9),
@@ -145,7 +140,7 @@ class HomeScreen extends StatelessWidget {
                   children: [
                     // Botón Configuración
                     Expanded(
-                      child: Container(
+                      child: SizedBox(
                         height: 50,
                         child: ElevatedButton.icon(
                           onPressed: () {
@@ -186,7 +181,7 @@ class HomeScreen extends StatelessWidget {
                     // Botón Cerrar Sesión
                     Expanded(
                       flex: 2,
-                      child: Container(
+                      child: SizedBox(
                         height: 50,
                         child: ElevatedButton.icon(
                           onPressed: () => _showLogoutDialog(context),
@@ -294,25 +289,40 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.of(context).pop(); // Cerrar diálogo
-                
-                // Navegar de vuelta al login limpiando el stack
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (context) => LoginScreen()),
-                  (Route<dynamic> route) => false,
-                );
-                
-                // Mostrar mensaje de despedida
-                Future.delayed(Duration(milliseconds: 500), () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('¡Hasta pronto! 👋'),
-                      backgroundColor: AppConstants.lightBlue,
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                });
+
+                try {
+                  // ✅ Cerrar sesión en Firebase
+                  await FirebaseAuth.instance.signOut();
+
+                  // ✅ AuthWrapper detectará automáticamente el cambio
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Row(
+                          children: const [
+                            Icon(Icons.check_circle, color: Colors.white),
+                            SizedBox(width: 8),
+                            Expanded(child: Text('¡Hasta pronto! 👋')),
+                          ],
+                        ),
+                        backgroundColor: AppConstants.lightBlue,
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  // Error al cerrar sesión
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error al cerrar sesión: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,

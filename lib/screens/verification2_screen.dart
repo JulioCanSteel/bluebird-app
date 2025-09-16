@@ -7,16 +7,16 @@ import 'home_screen.dart';
 class Verification2Screen extends StatefulWidget {
   final String userEmail;
   final String userPhone;
-  Verification2Screen({required this.userEmail, required this.userPhone});
+  const Verification2Screen({super.key, required this.userEmail, required this.userPhone});
 
   @override
   _VerificationScreenState createState() => _VerificationScreenState();
 }
 
 class _VerificationScreenState extends State<Verification2Screen> {
-  List<TextEditingController> _controllers =
+  final List<TextEditingController> _controllers =
       List.generate(6, (_) => TextEditingController());
-  List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
   Timer? _timer;
   int _remainingSeconds = 360; // 6 minutos
 
@@ -47,8 +47,12 @@ class _VerificationScreenState extends State<Verification2Screen> {
   @override
   void dispose() {
     _timer?.cancel();
-    for (var c in _controllers) c.dispose();
-    for (var f in _focusNodes) f.dispose();
+    for (var c in _controllers) {
+      c.dispose();
+    }
+    for (var f in _focusNodes) {
+      f.dispose();
+    }
     super.dispose();
   }
 
@@ -139,7 +143,6 @@ class _VerificationScreenState extends State<Verification2Screen> {
             SizedBox(height: 32),
             ElevatedButton(
               onPressed: _verifyCode,
-              child: Text('Verificar'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppConstants.lightBlue,
                 foregroundColor: Colors.white,
@@ -149,6 +152,7 @@ class _VerificationScreenState extends State<Verification2Screen> {
                 ),
                 minimumSize: Size(double.infinity, 50),
               ),
+              child: Text('Verificar'),
             ),
           ],
         ),

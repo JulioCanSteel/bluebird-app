@@ -6,13 +6,15 @@ import '../utils/validators.dart';
 
 
 class VerificationScreen extends StatefulWidget {
+  const VerificationScreen({super.key});
+
   @override
   _VerificationScreenState createState() => _VerificationScreenState();
 }
 
 class _VerificationScreenState extends State<VerificationScreen> {
-  List<TextEditingController> _controllers = List.generate(6, (index) => TextEditingController());
-  List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
+  final List<TextEditingController> _controllers = List.generate(6, (index) => TextEditingController());
+  final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
   bool _isLoading = false;
 
   @override
@@ -122,7 +124,7 @@ class _VerificationScreenState extends State<VerificationScreen> {
   }
 
   Widget _buildCodeField(int index) {
-    return Container(
+    return SizedBox(
       width: 50,
       height: 60,
       child: TextFormField(

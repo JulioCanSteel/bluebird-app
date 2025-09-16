@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../constants/app_constants.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/bird_widget.dart';
 import '../utils/validators.dart';
-import '../services/firebase_auth_service.dart';
 import 'forgot_password_screen.dart';
 import 'register_screen.dart';
-import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
   @override
   _LoginScreenState createState() => _LoginScreenState();
 }
@@ -18,7 +19,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  final FirebaseAuthService _authService = FirebaseAuthService();
   
   bool _isPasswordVisible = false;
   bool _isLoading = false;
@@ -41,7 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 // Pájaro pequeño en la esquina superior derecha
                 Row(
                   children: [
-                    Spacer(),
+                    const Spacer(),
                     BirdWidget(
                       width: 70,
                       height: 70,
@@ -111,7 +111,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => ForgotPasswordScreen()),
+                        MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()),
                       );
                     },
                     child: Text(
@@ -186,7 +186,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      AppConstants.noAccount + ' ',
+                      '${AppConstants.noAccount} ',
                       style: TextStyle(
                         color: AppConstants.subtitleColor,
                         fontSize: 14,
@@ -196,7 +196,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: () {
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (context) => RegisterScreen()),
+                          MaterialPageRoute(builder: (context) => const RegisterScreen()),
                         );
                       },
                       child: Text(
@@ -254,52 +254,100 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
 
-    final result = await _authService.signInWithEmailAndPassword(
-      email: _emailController.text.trim(),
-      password: _passwordController.text,
-    );
-
-    setState(() => _isLoading = false);
-
-    if (result['success']) {
-      // Mostrar mensaje de éxito
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.white),
-              SizedBox(width: 8),
-              Expanded(child: Text(result['message'])),
-            ],
-          ),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
+    try {
+      print('Intentando login con: ${_emailController.text.trim()}');
+      
+      // Login con Firebase
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text.trim(),
       );
 
-      // Navegar a Home después de mostrar mensaje
-      Future.delayed(Duration(milliseconds: 800), () {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => HomeScreen()),
-          (route) => false,
+      print('Login exitoso! Usuario: ${userCredential.user?.email}');
+      print('UID: ${userCredential.user?.uid}');
+      print('Estado actual: ${FirebaseAuth.instance.currentUser?.email}');
+
+      // Verificar el estado inmediatamente
+      await Future.delayed(Duration(milliseconds: 500));
+      print('Verificando estado después de 500ms: ${FirebaseAuth.instance.currentUser?.email}');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: const [
+                Icon(Icons.check_circle, color: Colors.white),
+                SizedBox(width: 8),
+                Expanded(child: Text("¡Bienvenido de nuevo!")),
+              ],
+            ),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
         );
-      });
-    } else {
-      // Mostrar error
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              Icon(Icons.error_outline, color: Colors.white),
-              SizedBox(width: 8),
-              Expanded(child: Text(result['message'])),
-            ],
+      }
+
+    } on FirebaseAuthException catch (e) {
+      print('Error de Firebase: ${e.code} - ${e.message}');
+      String errorMessage = _getFirebaseErrorMessage(e.code);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(child: Text(errorMessage)),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
           ),
-          backgroundColor: Colors.red,
-          duration: Duration(seconds: 3),
-        ),
-      );
+        );
+      }
+    } catch (e) {
+      print('Error general: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(child: Text("Error inesperado: $e")),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  String _getFirebaseErrorMessage(String errorCode) {
+    switch (errorCode) {
+      case 'user-not-found':
+        return 'No existe una cuenta con este email';
+      case 'wrong-password':
+        return 'Contraseña incorrecta';
+      case 'invalid-email':
+        return 'El email no es válido';
+      case 'user-disabled':
+        return 'Esta cuenta ha sido deshabilitada';
+      case 'too-many-requests':
+        return 'Demasiados intentos. Intenta más tarde';
+      case 'network-request-failed':
+        return 'Error de conexión. Verifica tu internet';
+      case 'invalid-credential':
+        return 'Email o contraseña incorrectos';
+      default:
+        return 'Error de autenticación: $errorCode';
     }
   }
 
