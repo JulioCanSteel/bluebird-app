@@ -24,7 +24,7 @@ android {
 
     defaultConfig {
     applicationId = "com.example.bluebird_app"
-    minSdk = 21                         
+    minSdk = flutter.minSdkVersion                         
     targetSdk = flutter.targetSdkVersion  
     versionCode = flutter.versionCode
     versionName = flutter.versionName
@@ -44,5 +44,5 @@ flutter {
     source = "../.."
 }
 dependencies {
-    implementation 'androidx.multidex:multidx:2.0.1'
+    implementation("androidx.multidex:multidex:2.0.1")
 }
