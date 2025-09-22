@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../constants/app_constants.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/bird_widget.dart';
 import '../utils/validators.dart';
+import '../services/firebase_auth_service.dart';
 import 'forgot_password_screen.dart';
 import 'register_screen.dart';
+import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,14 +20,16 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  
+  final FirebaseAuthService _authService = FirebaseAuthService();
+
   bool _isPasswordVisible = false;
   bool _isLoading = false;
+  bool _isGoogleLoading = false; 
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    
+
     return Scaffold(
       body: SafeArea(
         child: SingleChildScrollView(
@@ -37,11 +40,11 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 SizedBox(height: AppConstants.paddingMedium),
-                
+
                 // Pájaro pequeño en la esquina superior derecha
                 Row(
                   children: [
-                    const Spacer(),
+                    Spacer(),
                     BirdWidget(
                       width: 70,
                       height: 70,
@@ -49,9 +52,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
-                
+
                 SizedBox(height: AppConstants.paddingMedium),
-                
+
                 // Título
                 Text(
                   AppConstants.welcomeTitle,
@@ -62,36 +65,38 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 SizedBox(height: AppConstants.paddingXLarge),
-                
+
                 // Campo Email
                 CustomTextField(
                   hint: AppConstants.emailHint,
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  validator: Validators.validateEmail,
+                  validator: Validators.validateEmail, // Correcto
                   prefixIcon: Icon(
-                    Icons.email_outlined,
+                    Icons.email_outlined, // Corregido
                     color: AppConstants.subtitleColor,
                   ),
                 ),
-                
+
                 SizedBox(height: AppConstants.paddingLarge),
-                
+
                 // Campo Contraseña
                 CustomTextField(
                   hint: AppConstants.passwordHint,
                   controller: _passwordController,
-                  isPassword: !_isPasswordVisible,
-                  validator: Validators.validatePassword,
+                  isPassword: !_isPasswordVisible, // Correcto
+                  validator: Validators.validatePassword, // Correcto
                   prefixIcon: Icon(
-                    Icons.lock_outlined,
+                    Icons.lock_outlined, // Corregido
                     color: AppConstants.subtitleColor,
                   ),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                      _isPasswordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                       color: AppConstants.subtitleColor,
                     ),
                     onPressed: () {
@@ -101,9 +106,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                 ),
-                
+
                 SizedBox(height: AppConstants.paddingMedium),
-                
+
                 // Enlace recuperar contraseña
                 Align(
                   alignment: Alignment.centerRight,
@@ -111,7 +116,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const ForgotPasswordScreen()),
+                        MaterialPageRoute(
+                            builder: (context) => const ForgotPasswordScreen()),
                       );
                     },
                     child: Text(
@@ -123,18 +129,18 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-                
+
                 SizedBox(height: AppConstants.paddingMedium),
-                
+
                 // Botón Ingresar
                 CustomButton(
                   text: AppConstants.loginButton,
                   isLoading: _isLoading,
-                  onPressed: _handleLogin,
+                  onPressed: _handleLogin, // Corregido
                 ),
-                
+
                 SizedBox(height: AppConstants.paddingMedium),
-                
+
                 // Divider
                 Row(
                   children: [
@@ -145,7 +151,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     Padding(
-                      padding: EdgeInsets.symmetric(horizontal: AppConstants.paddingMedium),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: AppConstants.paddingMedium),
                       child: Text(
                         AppConstants.continueWith,
                         style: TextStyle(
@@ -162,25 +169,14 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
-                
+
                 SizedBox(height: AppConstants.paddingLarge),
-                
-                // Botones sociales placeholder
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    _buildSocialButton(Icons.g_mobiledata, () {
-                      _showFeatureNotImplemented('Google');
-                    }),
-                    SizedBox(width: AppConstants.paddingLarge),
-                    _buildSocialButton(Icons.facebook, () {
-                      _showFeatureNotImplemented('Facebook');
-                    }),
-                  ],
-                ),
-                
+
+                // Botón de Google Sign In
+                _buildGoogleSignInButton(),
+
                 SizedBox(height: AppConstants.paddingXLarge),
-                
+
                 // Enlace registro
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -196,7 +192,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: () {
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (context) => const RegisterScreen()),
+                          MaterialPageRoute(
+                              builder: (context) => const RegisterScreen()),
                         );
                       },
                       child: Text(
@@ -218,35 +215,102 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildSocialButton(IconData icon, VoidCallback onPressed) {
-    return Container(
-      width: 50,
+  // Widget para el botón de Google Sign In
+  Widget _buildGoogleSignInButton() {
+    return SizedBox(
+      width: double.infinity,
       height: 50,
-      decoration: BoxDecoration(
-        color: AppConstants.cardColor,
-        borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
-        border: Border.all(
-          color: AppConstants.subtitleColor.withOpacity(0.2),
+      child: ElevatedButton(
+        onPressed: (_isGoogleLoading || _isLoading) ? null : _handleGoogleSignIn,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.white,
+          foregroundColor: Colors.black87,
+          elevation: 2,
+          shadowColor: Colors.black26,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+            side: BorderSide(
+              color: AppConstants.subtitleColor.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
         ),
-      ),
-      child: IconButton(
-        onPressed: onPressed,
-        icon: Icon(
-          icon,
-          color: AppConstants.textColor,
-          size: 24,
-        ),
+        child: _isGoogleLoading
+            ? SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(AppConstants.primaryBlue),
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Logo de Google (usando imagen de red como en tu código original)
+                  Container(
+                    width: 20,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: NetworkImage('https://developers.google.com/identity/images/g-logo.png'),
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    child: Container(),
+                  ),
+                  SizedBox(width: 12),
+                  Text(
+                    'Continuar con Google',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                      color: const Color.fromARGB(255, 0, 0, 0),
+                    ),
+                  ),
+                ],
+              ),
       ),
     );
   }
 
-  void _showFeatureNotImplemented(String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$feature login próximamente disponible'),
-        backgroundColor: AppConstants.primaryBlue,
-      ),
-    );
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isGoogleLoading = true);
+
+    try {
+      final result = await _authService.signInWithGoogle();
+
+      if (result['success']) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('¡Inicio de sesión con Google exitoso!'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          (route) => false,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result['message'] ?? 'Error desconocido'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (error) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error al iniciar sesión con Google: $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isGoogleLoading = false);
+    }
   }
 
   Future<void> _handleLogin() async {
@@ -254,100 +318,37 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
 
-    try {
-      print('Intentando login con: ${_emailController.text.trim()}');
-      
-      // Login con Firebase
-      UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
+    final result = await _authService.signInWithEmailAndPassword(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+    );
+
+    setState(() => _isLoading = false);
+
+    if (result['success']) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? '¡Bienvenido!'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 2),
+        ),
       );
 
-      print('Login exitoso! Usuario: ${userCredential.user?.email}');
-      print('UID: ${userCredential.user?.uid}');
-      print('Estado actual: ${FirebaseAuth.instance.currentUser?.email}');
-
-      // Verificar el estado inmediatamente
-      await Future.delayed(Duration(milliseconds: 500));
-      print('Verificando estado después de 500ms: ${FirebaseAuth.instance.currentUser?.email}');
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: const [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 8),
-                Expanded(child: Text("¡Bienvenido de nuevo!")),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            duration: Duration(seconds: 2),
-          ),
+      Future.delayed(const Duration(milliseconds: 800), () {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          (route) => false,
         );
-      }
-
-    } on FirebaseAuthException catch (e) {
-      print('Error de Firebase: ${e.code} - ${e.message}');
-      String errorMessage = _getFirebaseErrorMessage(e.code);
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error_outline, color: Colors.white),
-                const SizedBox(width: 8),
-                Expanded(child: Text(errorMessage)),
-              ],
-            ),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    } catch (e) {
-      print('Error general: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error_outline, color: Colors.white),
-                const SizedBox(width: 8),
-                Expanded(child: Text("Error inesperado: $e")),
-              ],
-            ),
-            backgroundColor: Colors.red,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
-  }
-
-  String _getFirebaseErrorMessage(String errorCode) {
-    switch (errorCode) {
-      case 'user-not-found':
-        return 'No existe una cuenta con este email';
-      case 'wrong-password':
-        return 'Contraseña incorrecta';
-      case 'invalid-email':
-        return 'El email no es válido';
-      case 'user-disabled':
-        return 'Esta cuenta ha sido deshabilitada';
-      case 'too-many-requests':
-        return 'Demasiados intentos. Intenta más tarde';
-      case 'network-request-failed':
-        return 'Error de conexión. Verifica tu internet';
-      case 'invalid-credential':
-        return 'Email o contraseña incorrectos';
-      default:
-        return 'Error de autenticación: $errorCode';
+      });
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result['message'] ?? 'Error al iniciar sesión'),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 3),
+        ),
+      );
     }
   }
 

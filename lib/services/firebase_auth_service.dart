@@ -1,15 +1,27 @@
+// lib/services/firebase_auth_service.dart
+
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 
 class FirebaseAuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  // IMPORTANTE: usa la misma región donde desplegaste las Functions
+  final FirebaseFunctions _functions =
+      FirebaseFunctions.instanceFor(region: 'us-central1');
 
   // Usuario actual
   User? get currentUser => _auth.currentUser;
-  
+
   // Stream de cambios de autenticación
   Stream<User?> get authStateChanges => _auth.authStateChanges();
+
+  // ===================================
+  // AUTENTICACIÓN TRADICIONAL (OTP)
+  // ===================================
 
   // Registro con email y contraseña
   Future<Map<String, dynamic>> registerWithEmailAndPassword({
@@ -18,26 +30,26 @@ class FirebaseAuthService {
     required String phone,
   }) async {
     try {
+      final emailNormalized = email.trim().toLowerCase();
       UserCredential result = await _auth.createUserWithEmailAndPassword(
-        email: email,
+        email: emailNormalized,
         password: password,
       );
 
-      // Enviar verificación de email
-      await result.user!.sendEmailVerification();
-
-      // Guardar datos adicionales en Firestore
       await _firestore.collection('users').doc(result.user!.uid).set({
-        'email': email,
+        'email': emailNormalized,
         'phone': phone,
         'createdAt': FieldValue.serverTimestamp(),
         'emailVerified': false,
       });
 
+      final callable = _functions.httpsCallable('requestEmailOtp');
+      await callable.call({'email': emailNormalized});
+
       return {
         'success': true,
         'user': result.user,
-        'message': 'Usuario registrado exitosamente. Verifica tu email.'
+        'message': 'Usuario registrado exitosamente. Te enviamos un código.'
       };
     } on FirebaseAuthException catch (e) {
       String message = 'Error al registrar usuario';
@@ -68,7 +80,7 @@ class FirebaseAuthService {
         email: email,
         password: password,
       );
-      
+
       return {
         'success': true,
         'user': result.user,
@@ -98,50 +110,120 @@ class FirebaseAuthService {
       return {'success': false, 'message': 'Error inesperado: $e'};
     }
   }
-
-  // Recuperar contraseña
-  Future<Map<String, dynamic>> resetPassword(String email) async {
+  
+  // Método para verificar el código de 4 dígitos del email (OTP)
+  Future<bool> verifyEmailCode({
+    required String email,
+    required String code,
+  }) async {
     try {
-      await _auth.sendPasswordResetEmail(email: email);
+      final callable = _functions.httpsCallable('verifyEmailOtp');
+      await callable.call({'email': email, 'code': code});
+      await _auth.currentUser?.reload();
+      return _auth.currentUser?.emailVerified ?? false;
+    } on FirebaseFunctionsException {
+      rethrow;
+    } catch (e) {
+      throw FirebaseFunctionsException(code: 'unknown', message: e.toString());
+    }
+  }
+
+  // Método para reenviar el OTP de email
+  Future<Map<String, dynamic>> resendEmailOtp(String email) async {
+    try {
+      final callable = _functions.httpsCallable('requestEmailOtp');
+      final result = await callable.call({'email': email});
+      return {'success': true, 'message': result.data['message'] ?? 'Código reenviado.'};
+    } on FirebaseFunctionsException catch (e) {
+      return {'success': false, 'message': _mapFunctionsError(e)};
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  // ===================================
+  // AUTENTICACIÓN CON GOOGLE
+  // ===================================
+
+  // Login con Google
+  Future<Map<String, dynamic>> signInWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+
+      if (googleUser == null) {
+        return {'success': false, 'message': 'Inicio de sesión de Google cancelado'};
+      }
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final UserCredential userCredential = await _auth.signInWithCredential(credential);
+
+      if (userCredential.additionalUserInfo!.isNewUser) {
+        await _firestore.collection('users').doc(userCredential.user!.uid).set({
+          'email': userCredential.user!.email,
+          'displayName': userCredential.user!.displayName,
+          'photoUrl': userCredential.user!.photoURL,
+          'createdAt': FieldValue.serverTimestamp(),
+          'emailVerified': true,
+        });
+      }
+
+      return {'success': true, 'message': 'Inicio de sesión con Google exitoso'};
+    } on FirebaseAuthException catch (e) {
+      return {'success': false, 'message': e.message};
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  // ===================================
+  // RESTABLECIMIENTO DE CONTRASEÑA (OTP)
+  // ===================================
+
+  Future<Map<String, dynamic>> requestPasswordResetOtp(String email) async {
+    try {
+      final callable = _functions.httpsCallable('requestPasswordResetOtp');
+      await callable.call({'email': email.trim().toLowerCase()});
+      return {'success': true, 'message': 'Te enviamos un código a tu correo.'};
+    } on FirebaseFunctionsException catch (e) {
+      final msg = _mapFunctionsError(e);
+      return {'success': false, 'message': msg};
+    } catch (e) {
+      return {'success': false, 'message': e.toString()};
+    }
+  }
+
+  Future<Map<String, dynamic>> resetPasswordWithOtp({
+    required String email,
+    required String code,
+    required String newPassword,
+  }) async {
+    try {
+      final callable = _functions.httpsCallable('resetPasswordWithOtp');
+      await callable.call({
+        'email': email.trim().toLowerCase(),
+        'code': code.trim(),
+        'newPassword': newPassword,
+      });
       return {
         'success': true,
-        'message': 'Email de recuperación enviado exitosamente'
+        'message': 'Contraseña actualizada. Inicia sesión.'
       };
-    } on FirebaseAuthException catch (e) {
-      String message = 'Error al enviar email';
-      switch (e.code) {
-        case 'user-not-found':
-          message = 'No existe usuario con este email';
-          break;
-        case 'invalid-email':
-          message = 'Email inválido';
-          break;
-      }
-      return {'success': false, 'message': message};
+    } on FirebaseFunctionsException catch (e) {
+      final msg = _mapFunctionsError(e);
+      return {'success': false, 'message': msg};
     } catch (e) {
-      return {'success': false, 'message': 'Error inesperado: $e'};
+      return {'success': false, 'message': e.toString()};
     }
   }
 
-  // Reenviar verificación de email
-  Future<Map<String, dynamic>> resendEmailVerification() async {
-    try {
-      User? user = currentUser;
-      if (user != null && !user.emailVerified) {
-        await user.sendEmailVerification();
-        return {
-          'success': true,
-          'message': 'Email de verificación reenviado'
-        };
-      }
-      return {
-        'success': false,
-        'message': 'No hay usuario o ya está verificado'
-      };
-    } catch (e) {
-      return {'success': false, 'message': 'Error al reenviar: $e'};
-    }
-  }
+  // ===================================
+  // OTROS MÉTODOS DE SERVICIO
+  // ===================================
 
   // Obtener datos del usuario de Firestore
   Future<Map<String, dynamic>?> getUserData(String uid) async {
@@ -170,6 +252,7 @@ class FirebaseAuthService {
 
   // Cerrar sesión
   Future<void> signOut() async {
+    await _googleSignIn.signOut();
     await _auth.signOut();
   }
 
@@ -178,15 +261,36 @@ class FirebaseAuthService {
     try {
       User? user = currentUser;
       if (user != null) {
-        // Eliminar datos de Firestore
         await _firestore.collection('users').doc(user.uid).delete();
-        // Eliminar cuenta de Auth
         await user.delete();
         return {'success': true, 'message': 'Cuenta eliminada exitosamente'};
       }
       return {'success': false, 'message': 'No hay usuario autenticado'};
-    } catch (e) {
+    } on FirebaseAuthException catch (e) {
       return {'success': false, 'message': 'Error al eliminar cuenta: $e'};
+    }
+  }
+
+  // ===================================
+  // HELPERS
+  // ===================================
+
+  String _mapFunctionsError(FirebaseFunctionsException e) {
+    switch (e.code) {
+      case 'invalid-argument':
+        return e.message ?? 'Datos inválidos. Revisa email/código/contraseña.';
+      case 'not-found':
+        return 'No existe usuario con ese email.';
+      case 'failed-precondition':
+        return 'No hay un código activo. Solicítalo primero.';
+      case 'deadline-exceeded':
+        return 'El código expiró. Pide uno nuevo.';
+      case 'resource-exhausted':
+        return 'Demasiados intentos o cooldown activo.';
+      case 'permission-denied':
+        return 'Permisos insuficientes.';
+      default:
+        return e.message ?? 'Error (Functions).';
     }
   }
 }

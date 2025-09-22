@@ -4,9 +4,10 @@ import '../widgets/custom_button.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/bird_widget.dart';
 import '../utils/validators.dart';
-import '../services/firebase_auth_service.dart'; // Requiere Firebase Service
-import 'home_screen.dart'; // Navegación directa a Home
+import '../services/firebase_auth_service.dart';
 import 'login_screen.dart';
+import 'verification_screen.dart';
+// Navegación directa a Home
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -21,7 +22,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
-  final FirebaseAuthService _authService = FirebaseAuthService(); // Firebase Service
+  final FirebaseAuthService _authService = FirebaseAuthService();
 
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
@@ -60,7 +61,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ],
                 ),
                 SizedBox(height: AppConstants.paddingMedium),
-                
+
                 // Título
                 Text(
                   AppConstants.createAccount,
@@ -71,9 +72,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 SizedBox(height: AppConstants.paddingXLarge),
-                
+
                 // Campo Email
                 CustomTextField(
                   hint: AppConstants.emailHint,
@@ -85,9 +86,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     color: AppConstants.subtitleColor,
                   ),
                 ),
-                
+
                 SizedBox(height: AppConstants.paddingMedium),
-                
+
                 // Campo Teléfono
                 CustomTextField(
                   hint: AppConstants.phoneHint,
@@ -99,9 +100,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     color: AppConstants.subtitleColor,
                   ),
                 ),
-                
+
                 SizedBox(height: AppConstants.paddingMedium),
-                
+
                 // Campo Contraseña
                 CustomTextField(
                   hint: AppConstants.passwordHint,
@@ -114,7 +115,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                      _isPasswordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                       color: AppConstants.subtitleColor,
                     ),
                     onPressed: () {
@@ -124,9 +127,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     },
                   ),
                 ),
-                
+
                 SizedBox(height: AppConstants.paddingMedium),
-                
+
                 // Campo Confirmar Contraseña
                 CustomTextField(
                   hint: AppConstants.confirmPasswordHint,
@@ -142,7 +145,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   suffixIcon: IconButton(
                     icon: Icon(
-                      _isConfirmPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                      _isConfirmPasswordVisible
+                          ? Icons.visibility
+                          : Icons.visibility_off,
                       color: AppConstants.subtitleColor,
                     ),
                     onPressed: () {
@@ -152,18 +157,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     },
                   ),
                 ),
-                
+
                 SizedBox(height: AppConstants.paddingXLarge * 2),
-                
+
                 // Botón Crear Cuenta
                 CustomButton(
                   text: "Crear Cuenta",
                   isLoading: _isLoading,
                   onPressed: _handleRegister,
                 ),
-                
+
                 SizedBox(height: AppConstants.paddingLarge),
-                
+
                 // Términos y condiciones
                 Text(
                   'Al crear una cuenta, aceptas nuestros términos y condiciones',
@@ -173,9 +178,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 SizedBox(height: AppConstants.paddingMedium),
-                
+
                 // Link para ir a Login
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -233,10 +238,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
-            children: [
+            children: const [
               Icon(Icons.check_circle, color: Colors.white),
               SizedBox(width: 8),
-              Expanded(child: Text('¡Registro exitoso! Bienvenido a Bluebird.')),
+              Expanded(
+                  child: Text(
+                      '¡Registro exitoso! Te enviamos un CÓDIGO de verificación.')),
             ],
           ),
           backgroundColor: Colors.green,
@@ -244,19 +251,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
       );
 
-      // Navegar directamente a HomeScreen (usuario ya está autenticado)
-      Future.delayed(Duration(milliseconds: 1000), () {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (context) => HomeScreen(
-              userEmail: _emailController.text,
-              userPhone: _phoneController.text,
-            ),
+      // Navegar a la pantalla de verificación
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) => VerificationScreen(
+            email: _emailController.text.trim(),
+            phone: _phoneController.text.trim(),
           ),
-          (route) => false, // Limpiar stack de navegación
-        );
-      });
+        ),
+        (route) => false,
+      );
     } else {
       // Mostrar error de Firebase
       ScaffoldMessenger.of(context).showSnackBar(

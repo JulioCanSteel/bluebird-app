@@ -1,11 +1,18 @@
+// main.dart unificado
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'firebase_options.dart'; // Archivo generado con flutterfire configure
-
+import 'firebase_options.dart'; // Este archivo se genera con flutterfire configure
 import 'screens/welcome_screen.dart';
 import 'screens/home_screen.dart';
 import 'constants/app_constants.dart';
+
+// ⬇️ Importa la llave global del ScaffoldMessenger para usarla en HomeScreen
+// Debes crear un nuevo archivo en tu proyecto, por ejemplo 'core/app_scaffold.dart'
+// con este contenido: final rootScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+// Aún si no usas esta funcionalidad, es una buena práctica tenerla para el futuro
+// si no lo usas, solo borra esta linea y el scaffoldMessengerKey en MaterialApp
+// import 'core/app_scaffold.dart';
 
 void main() async {
   // Asegurar inicialización de widgets
@@ -19,6 +26,7 @@ void main() async {
     print('✅ Firebase inicializado correctamente');
   } catch (e) {
     print('❌ Error inicializando Firebase: $e');
+    // La app puede seguir funcionando sin Firebase
   }
 
   runApp(const MyApp());
@@ -34,9 +42,11 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
         scaffoldBackgroundColor: AppConstants.backgroundColor,
-        fontFamily: 'Poppins', // Si configuraste la fuente
+        fontFamily: 'Poppins', // Si tienes la fuente configurada
       ),
-      home: const AuthWrapper(), // 👈 Aquí controlamos la sesión
+      // ⬇️ Agrega esta linea para que los SnackBar sean globales
+      // scaffoldMessengerKey: rootScaffoldMessengerKey,
+      home: const AuthWrapper(), // Widget que maneja el estado de autenticación
       debugShowCheckedModeBanner: false,
     );
   }
@@ -50,41 +60,21 @@ class AuthWrapper extends StatelessWidget {
     return StreamBuilder<User?>(
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
-        // Debug información
-        print('🔄 AuthWrapper - Estado de conexión: ${snapshot.connectionState}');
-        print('🔄 AuthWrapper - Tiene datos: ${snapshot.hasData}');
-        print('🔄 AuthWrapper - Usuario: ${snapshot.data?.email ?? 'null'}');
-        print('🔄 AuthWrapper - Error: ${snapshot.error}');
-
-        // ⏳ Mientras se verifica el estado del usuario
+        // Mostrar loading
         if (snapshot.connectionState == ConnectionState.waiting) {
-          print('⏳ AuthWrapper - Esperando...');
-          return Scaffold(
-            backgroundColor: AppConstants.backgroundColor,
+          return const Scaffold(
             body: Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Container(
+                  SizedBox(
                     width: 120,
                     height: 120,
-                    decoration: BoxDecoration(
-                      color: AppConstants.primaryBlue.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(60),
-                    ),
-                    child: Icon(
-                      Icons.flutter_dash,
-                      size: 60,
-                      color: AppConstants.primaryBlue,
-                    ),
+                    child: CircularProgressIndicator(color: AppConstants.primaryBlue),
                   ),
-                  const SizedBox(height: AppConstants.paddingLarge),
-                  CircularProgressIndicator(
-                    color: AppConstants.primaryBlue,
-                  ),
-                  const SizedBox(height: AppConstants.paddingMedium),
+                  SizedBox(height: AppConstants.paddingLarge),
                   Text(
-                    'Cargando ${AppConstants.appName}...',
+                    'Cargando...',
                     style: TextStyle(
                       color: AppConstants.textColor,
                       fontSize: 16,
@@ -96,21 +86,19 @@ class AuthWrapper extends StatelessWidget {
           );
         }
 
-        // ❌ Si hay error, mostrar pantalla de bienvenida
+        // Si hay error de conexión, mostrar WelcomeScreen
         if (snapshot.hasError) {
-          print('❌ AuthWrapper - Error: ${snapshot.error}');
-          return const WelcomeScreen();
+          print('Error en AuthWrapper: ${snapshot.error}');
+          return WelcomeScreen();
         }
 
-        // ✅ Si ya hay usuario logueado → Home
+        // Si hay usuario autenticado, ir a HomeScreen
         if (snapshot.hasData && snapshot.data != null) {
-          print('✅ AuthWrapper - Navegando a HomeScreen para: ${snapshot.data!.email}');
           return const HomeScreen();
         }
 
-        // 🟦 Si no hay usuario logueado → Welcome/Login
-        print('🟦 AuthWrapper - Sin usuario, navegando a WelcomeScreen');
-        return const WelcomeScreen();
+        // Si no hay usuario, mostrar WelcomeScreen
+        return WelcomeScreen();
       },
     );
   }

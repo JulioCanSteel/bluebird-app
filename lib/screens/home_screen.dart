@@ -1,26 +1,30 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import '../constants/app_constants.dart';
 import '../widgets/bird_widget.dart';
 import 'login_screen.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // Importa FirebaseAuth
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  final String? userEmail; // Email del usuario
+  final String? userPhone;
+
+  const HomeScreen({
+    super.key,
+    this.userEmail,
+    this.userPhone,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // 📱 Obtener datos del usuario actual automáticamente
-    final User? currentUser = FirebaseAuth.instance.currentUser;
     final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
       body: Container(
         width: double.infinity,
         height: double.infinity,
         // Fondo con degradado azul similar al welcome
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -37,8 +41,8 @@ class HomeScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 // Spacer superior
-                Spacer(flex: 1),
-                
+                const Spacer(flex: 1),
+
                 // Mensaje de bienvenida
                 Text(
                   '¡Bienvenido!',
@@ -49,9 +53,9 @@ class HomeScreen extends StatelessWidget {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 SizedBox(height: AppConstants.paddingMedium),
-                
+
                 // Submensaje
                 Text(
                   'Has ingresado exitosamente a',
@@ -61,9 +65,9 @@ class HomeScreen extends StatelessWidget {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 SizedBox(height: AppConstants.paddingSmall),
-                
+
                 // Nombre de la app
                 Text(
                   AppConstants.appName,
@@ -74,13 +78,13 @@ class HomeScreen extends StatelessWidget {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                
+
                 SizedBox(height: AppConstants.paddingXLarge),
-                
+
                 // Pájaro principal con animación suave
                 Center(
                   child: AnimatedContainer(
-                    duration: Duration(milliseconds: 1000),
+                    duration: const Duration(milliseconds: 1000),
                     child: BirdWidget(
                       width: screenWidth * 0.6,
                       height: screenWidth * 0.6,
@@ -90,12 +94,12 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                
+
                 // Spacer medio
-                Spacer(flex: 2),
-                
+                const Spacer(flex: 2),
+
                 // Email del usuario si está disponible
-                if (currentUser?.email != null) ...[
+                if (userEmail != null) ...[
                   Container(
                     padding: EdgeInsets.symmetric(
                       horizontal: AppConstants.paddingLarge,
@@ -103,7 +107,8 @@ class HomeScreen extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+                      borderRadius:
+                          BorderRadius.circular(AppConstants.radiusMedium),
                       border: Border.all(
                         color: Colors.white.withOpacity(0.2),
                         width: 1,
@@ -120,7 +125,7 @@ class HomeScreen extends StatelessWidget {
                         SizedBox(width: AppConstants.paddingSmall),
                         Flexible(
                           child: Text(
-                            currentUser!.email!,
+                            userEmail!,
                             style: GoogleFonts.poppins(
                               fontSize: 14,
                               color: Colors.white.withOpacity(0.9),
@@ -134,7 +139,7 @@ class HomeScreen extends StatelessWidget {
                   ),
                   SizedBox(height: AppConstants.paddingLarge),
                 ],
-                
+
                 // Botones de acción
                 Row(
                   children: [
@@ -144,15 +149,16 @@ class HomeScreen extends StatelessWidget {
                         height: 50,
                         child: ElevatedButton.icon(
                           onPressed: () {
-                            // TODO: Navegar a configuraciones
+                            // Mostrar SnackBar
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('Configuraciones - Próximamente'),
+                                content: const Text(
+                                    'Configuraciones - Próximamente'),
                                 backgroundColor: AppConstants.lightBlue,
                               ),
                             );
                           },
-                          icon: Icon(Icons.settings_outlined, size: 20),
+                          icon: const Icon(Icons.settings_outlined, size: 20),
                           label: Text(
                             'Config',
                             style: GoogleFonts.poppins(
@@ -169,15 +175,16 @@ class HomeScreen extends StatelessWidget {
                               width: 1,
                             ),
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+                              borderRadius: BorderRadius.circular(
+                                  AppConstants.radiusMedium),
                             ),
                           ),
                         ),
                       ),
                     ),
-                    
+
                     SizedBox(width: AppConstants.paddingMedium),
-                    
+
                     // Botón Cerrar Sesión
                     Expanded(
                       flex: 2,
@@ -185,7 +192,7 @@ class HomeScreen extends StatelessWidget {
                         height: 50,
                         child: ElevatedButton.icon(
                           onPressed: () => _showLogoutDialog(context),
-                          icon: Icon(Icons.logout_outlined, size: 20),
+                          icon: const Icon(Icons.logout_outlined, size: 20),
                           label: Text(
                             'Cerrar Sesión',
                             style: GoogleFonts.poppins(
@@ -198,7 +205,8 @@ class HomeScreen extends StatelessWidget {
                             foregroundColor: Colors.white,
                             elevation: 2,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(AppConstants.radiusMedium),
+                              borderRadius: BorderRadius.circular(
+                                  AppConstants.radiusMedium),
                             ),
                           ),
                         ),
@@ -206,10 +214,10 @@ class HomeScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                
+
                 // Spacer inferior
-                Spacer(flex: 1),
-                
+                const Spacer(flex: 1),
+
                 // Información adicional
                 Container(
                   padding: EdgeInsets.all(AppConstants.paddingMedium),
@@ -246,7 +254,7 @@ class HomeScreen extends StatelessWidget {
   void _showLogoutDialog(BuildContext context) {
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (BuildContext dialogContext) {
         return AlertDialog(
           backgroundColor: AppConstants.cardColor,
           shape: RoundedRectangleBorder(
@@ -254,7 +262,7 @@ class HomeScreen extends StatelessWidget {
           ),
           title: Row(
             children: [
-              Icon(
+              const Icon(
                 Icons.logout_outlined,
                 color: Colors.red,
                 size: 24,
@@ -279,7 +287,7 @@ class HomeScreen extends StatelessWidget {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => Navigator.of(dialogContext).pop(),
               child: Text(
                 'Cancelar',
                 style: GoogleFonts.poppins(
@@ -289,46 +297,34 @@ class HomeScreen extends StatelessWidget {
               ),
             ),
             ElevatedButton(
-              onPressed: () async {
-                Navigator.of(context).pop(); // Cerrar diálogo
+              onPressed: () async { // Usa async
+                // Cerrar sesión en Firebase
+                await FirebaseAuth.instance.signOut();
 
-                try {
-                  // ✅ Cerrar sesión en Firebase
-                  await FirebaseAuth.instance.signOut();
+                // Cerrar el diálogo usando SU propio context
+                Navigator.of(dialogContext).pop();
 
-                  // ✅ AuthWrapper detectará automáticamente el cambio
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Row(
-                          children: const [
-                            Icon(Icons.check_circle, color: Colors.white),
-                            SizedBox(width: 8),
-                            Expanded(child: Text('¡Hasta pronto! 👋')),
-                          ],
-                        ),
-                        backgroundColor: AppConstants.lightBlue,
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  }
-                } catch (e) {
-                  // Error al cerrar sesión
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Error al cerrar sesión: $e'),
-                        backgroundColor: Colors.red,
-                      ),
-                    );
-                  }
-                }
+                // Navegar al login limpiando el stack
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (_) => LoginScreen()),
+                  (_) => false,
+                );
+
+                // Opcionalmente, mostrar un mensaje de despedida
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('¡Hasta pronto! 👋'),
+                    backgroundColor: AppConstants.lightBlue,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppConstants.radiusSmall),
+                  borderRadius:
+                      BorderRadius.circular(AppConstants.radiusSmall),
                 ),
               ),
               child: Text(

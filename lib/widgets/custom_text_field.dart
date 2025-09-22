@@ -2,19 +2,22 @@ import 'package:flutter/material.dart';
 import '../constants/app_constants.dart';
 
 
-
 class CustomTextField extends StatelessWidget {
-  final String hint;                    // Texto de ayuda
-  final TextEditingController controller; // Controlador del campo
-  final bool isPassword;               // Si es campo de contraseña
-  final String? Function(String?)? validator; // Función de validación
-  final TextInputType keyboardType;    // Tipo de teclado
-  final Widget? prefixIcon;            // Icono al inicio
-  final Widget? suffixIcon;            // Icono al final
+  final String? hint;
+  final String? labelText;
+  final String? hintText;
+  final TextEditingController controller;
+  final bool isPassword;
+  final String? Function(String?)? validator;
+  final TextInputType keyboardType;
+  final Widget? prefixIcon;
+  final Widget? suffixIcon;
   
   const CustomTextField({
     super.key,
-    required this.hint,
+    this.hint,
+    this.labelText,
+    this.hintText,
     required this.controller,
     this.isPassword = false,
     this.validator,
@@ -35,7 +38,11 @@ class CustomTextField extends StatelessWidget {
         fontSize: 16,
       ),
       decoration: InputDecoration(
-        hintText: hint,
+        labelText: labelText,
+        hintText: hintText ?? hint,
+        labelStyle: TextStyle(
+          color: AppConstants.subtitleColor,
+        ),
         hintStyle: TextStyle(
           color: AppConstants.subtitleColor,
           fontSize: 16,

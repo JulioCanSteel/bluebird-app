@@ -11,21 +11,33 @@ class WelcomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
-    
+
     return Scaffold(
+      // Añade un AppBar para el botón de retroceso
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        // El botón de retroceso se muestra por defecto. Puedes personalizarlo:
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: AppConstants.textColor),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        ),
+      ),
+      extendBodyBehindAppBar: true, // Para que el body ocupe el espacio del AppBar
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        // Fondo con degradado azul 
+        // Fondo con degradado azul
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color.fromARGB(255, 3, 74, 120), // 
-              Color.fromARGB(8, 26, 47, 1), // 
+              Color.fromARGB(255, 3, 74, 120),
+              Color.fromARGB(8, 26, 47, 1),
             ],
           ),
         ),
@@ -40,22 +52,22 @@ class WelcomeScreen extends StatelessWidget {
               children: [
                 // Espaciador superior
                 Spacer(flex: 2),
-                
-                // Pájaro principal 
+
+                // Pájaro principal
                 Center(
                   child: BirdWidget(
-                    width: screenWidth * 0.75,  // 
-                    height: screenWidth * 0.75, // 
+                    width: screenWidth * 0.75,
+                    height: screenWidth * 0.75,
                     showShadow: true,
                     shadowBlur: 20.0,
                     shadowColor: Colors.black.withOpacity(0.015),
                   ),
                 ),
-                
+
                 // Espaciador entre pájaro y botones
                 Spacer(flex: 3),
-                
-                // Contenedor con botones 
+
+                // Contenedor con botones
                 Row(
                   children: [
                     // Botón Ingresar - Azul relleno
@@ -79,15 +91,15 @@ class WelcomeScreen extends StatelessWidget {
                           ),
                           child: Text(
                             AppConstants.loginButton,
-                           style: GoogleFonts.poppins( fontSize: 16, fontWeight: FontWeight.bold, // Poppins Bold
+                           style: GoogleFonts.poppins( fontSize: 16, fontWeight: FontWeight.bold,
                           ),
                           ),
                         ),
                       ),
                     ),
-                    
+
                     SizedBox(width: 16), // Espacio entre botones
-                    
+
                     // Botón Registrarse - Blanco/Outlined
                     Expanded(
                       child: SizedBox(
@@ -110,14 +122,13 @@ class WelcomeScreen extends StatelessWidget {
                           child: Text(
                             AppConstants.registerButton,
                             style: GoogleFonts.poppins( fontSize: 16,fontWeight: FontWeight.bold, ),
-  
                           ),
                         ),
                       ),
                     ),
                   ],
                 ),
-                
+
                 // Espaciador inferior
                 Spacer(flex: 1),
               ],

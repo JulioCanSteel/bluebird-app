@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import '../constants/app_constants.dart';
-import '../widgets/bird_widget.dart';
 import 'home_screen.dart';
 
 class Verification2Screen extends StatefulWidget {
   final String userEmail;
   final String userPhone;
-  const Verification2Screen({super.key, required this.userEmail, required this.userPhone});
+  const Verification2Screen(
+      {super.key, required this.userEmail, required this.userPhone});
 
   @override
   _VerificationScreenState createState() => _VerificationScreenState();
@@ -122,7 +122,8 @@ class _VerificationScreenState extends State<Verification2Screen> {
                     decoration: InputDecoration(
                       counterText: '',
                       filled: true,
-                      fillColor: Color.fromARGB(90, 10, 30, 60), // fondo azul traslúcido
+                      fillColor: Color.fromARGB(
+                          90, 10, 30, 60), // fondo azul traslúcido
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
                         borderSide: BorderSide(color: Colors.white, width: 2),
@@ -133,7 +134,8 @@ class _VerificationScreenState extends State<Verification2Screen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: AppConstants.lightBlue, width: 2),
+                        borderSide:
+                            BorderSide(color: AppConstants.lightBlue, width: 2),
                       ),
                     ),
                   ),
