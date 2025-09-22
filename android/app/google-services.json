@@ -15,6 +15,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "453706001993-ncs2d9b6rv94hrb35v301j45kljoaffp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.bluebird_app",
+            "certificate_hash": "fd0569a7568ce0f866f1d915a8c045d737574c70"
+          }
+        },
+        {
           "client_id": "453706001993-s2cpirjtt6n015h0p1s0n1ngg59cv07h.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -30,6 +38,13 @@
             {
               "client_id": "453706001993-s2cpirjtt6n015h0p1s0n1ngg59cv07h.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "453706001993-5nbgpu8j5plcnvgf2jmnj3gpjjpij239.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.bluebirdApp"
+              }
             }
           ]
         }
